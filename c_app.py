@@ -35,7 +35,7 @@ st.title("Google Chinese Restaurant!")
 
 @st.cache_resource
 def load_chatbot():
-    
+    os.write(1,b'Something was executed.\n')
     print("1")
     os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"] 
     print("2")
@@ -55,6 +55,8 @@ def load_chatbot():
     print("resp2", resp.text)
     
     return  Chatbot(model_name="gemini-pro")
+
+print("33333333333333")
 
 chatbot = load_chatbot()
 
