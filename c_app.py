@@ -31,7 +31,7 @@ def check_server(port):
 #     vertexai.init(project="semantic-1", location="us-central1", credentials=credentials)
 #     print(f'credentials:=====================================> {credentials}')
 
-st.title("Google Chinese Restaurant!") 
+st.title("Google Chinese Restaurant!!!!~") 
 
 @st.cache_resource
 def load_chatbot():
