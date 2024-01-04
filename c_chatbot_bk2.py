@@ -1,7 +1,7 @@
 import google.generativeai as genai
 from google.generativeai.types.generation_types import GenerateContentResponse 
 from pprint import pprint
-import vertexai.preview.generative_models as generative_models
+
 from vertexai.preview.generative_models import GenerativeModel, FunctionDeclaration, Part, Tool, Part, GenerationResponse
 from google.oauth2 import service_account
 import vertexai
@@ -63,7 +63,7 @@ function_declarations=[
             }
         },
     ),
-     FunctionDeclaration(
+    FunctionDeclaration(
         name="make_reservation",
         description="예약을 진행한다.",
         parameters={
@@ -75,16 +75,8 @@ function_declarations=[
                 },
                 "bungalow_name": {
                     "type": "string",
-                    "description": "숙소 이름",
-                    "enum": ["가든동","숲속동","오션동"]
-                },
-                "customer_name": {
-                    "type": "string",
-                    "description": "고객 이름",
-                },
-                "phone_number": {
-                    "type": "string",
-                    "description": "휴대폰번호",
+                    "description": "숙소 등급",
+                     "enum": ["가든동","숲속동","오션동"]
                 },
             }
         },
@@ -98,13 +90,13 @@ bungalows = {
 }
 
 bookings = {
-    "2024-01-06":  [("숲속동", "김OO", "050-1234-5678"), ("가든동", "박OO", "050-4321-5678")],
-    "2024-01-13":  [("가든동", "이OO", "050-4321-9765")]
+    "2024-01-06":  ["숲속동","가든동"],
+    "2024-01-13":  ["가든동"]
 }
 
 def get_availables(date, number):
     bungalow_names = set(bungalows.keys())
-    reserved_bungalow_names = list(map(lambda x : x[0], bookings.get(date, {})))
+    reserved_bungalow_names = set(bookings.get(date, {}))
     vacant_bungalow_names = bungalow_names.difference(reserved_bungalow_names)    
     availables = []
     for vacant_bungalow_name in vacant_bungalow_names:
@@ -129,22 +121,14 @@ def answer_bungalows_price(**kwargs):
     return {"답변": bungalows[name]['숙박료'], 
             "주의사항": '답변 범위 내에서만 답할 것' }
 
-
 def make_reservation(**kwargs):
-    check_in_date = kwargs.get('check_in_date', None)
-    bungalow_name = kwargs.get('bungalow_name', None)    
-    phone_number = kwargs.get('phone_number', None)    
-    customer_name = kwargs.get('customer_name', None)    
-    bookings[check_in_date].append((bungalow_name, customer_name, phone_number))
-    print(f'bookings: {bookings}')
-    return {"답변": f"{customer_name}r님 {check_in_date} {bungalow_name}으로 예약이 완료되었습니다. 그날 뵙겠습니다. 감사합니다.", "주의사항": '답변대로만 답할 것' }
+    return {"답변": "예약이 완료되었습니다. 감사합니다.", "주의사항": '답변대로만 답할 것' }
 
 
 function_repoistory = {    
     "inform_available_bungalows": inform_available_bungalows,
     "present_bungalows_features": present_bungalows_features,
     "answer_bungalows_price": answer_bungalows_price,
-    # "confirm_reservation": confirm_reservation,
     "make_reservation": make_reservation,
 }
 
@@ -164,10 +148,6 @@ class Chatbot:
         self.model = GenerativeModel(
                 model_name,
                 generation_config={"temperature": 0, "top_p":0},                
-                safety_settings = {
-                    generative_models.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: generative_models.HarmBlockThreshold.BLOCK_NONE,
-                    generative_models.HarmCategory.HARM_CATEGORY_HARASSMENT: generative_models.HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-                },
                 tools=[Tool(function_declarations)]
             ).start_chat()
         #self.model.send_message(system_role)
@@ -242,57 +222,35 @@ class Chatbot1:
 #         chatbot.add_response(response)
 #         print(f'response: {response.text}')     
 
+        
 
 if __name__ == "__main__":   
     chatbot = Chatbot("gemini-pro")
     
-    messages = [
-                    "안녕하세요", 
-                    "다음주 토요일에 숙박하려고 하는데 예약 가능한가요?", 
-                    "3명이요.", 
-                    "오션동은 어떤 숙소에요?", 
-                    "숙박료는 어떻게 되요?", 
-                    "네. 예약해주세요.", 
-                    "강수산, 010-0000-0000입니다."
-                ]
+    message = "안녕하세요"; print(message)
+    print("="*50)
+    response = chatbot.send_message(message); print(response.text)
+    #message = "내일 3명 투숙할 건데 예약 가능한가요?"; print(message)
     
-    for idx, message in enumerate(messages):
-        if idx == 1:
-            pass        
-        print(message)
-        print("="*50)
-        response = chatbot.send_message(message)
-        print(response.text)
-        print("="*50)
+    message = "다음주 토요일에 3명 숙박하려고 하는데 예약 가능한가요?"; print(message)
+    print("="*50)
+    response = chatbot.send_message(message); print(response.text)
         
-    # message = "안녕하세요"; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-    # #message = "내일 3명 투숙할 건데 예약 가능한가요?"; print(message)
+    message = "3명이요"; print(message)
+    print("="*50)
+    response = chatbot.send_message(message); print(response.text)
+        
+    message = "오션동은 어떤 가요?"; print(message)
+    print("="*50)
+    response = chatbot.send_message(message); print(response.text)
+        
+    message = "숙박료는 어떻게 되요?"; print(message)
+    print("="*50)
+    response = chatbot.send_message(message); print(response.text)
+    print("="*50)
     
-    # message = "다음주 토요일에 숙박하려고 하는데 예약 가능한가요?"; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-        
-    # message = "3명이요"; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-        
-    # message = "오션동은 어떤 숙소에요?"; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-        
-    # message = "숙박료는 어떻게 되요?"; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-    # print("="*50)
-    
-    # message = "네. 예약해주세요"; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-    # print("="*50)
-    
-    # message = "강수산, 010-0000-0000입니다."; print(message)
-    # print("="*50)
-    # response = chatbot.send_message(message); print(response.text)
-    # print("="*50)
+    message = "네. 예약해주세요"; print(message)
+    print("="*50)
+    response = chatbot.send_message(message); print(response.text)
+    print("="*50)
+
